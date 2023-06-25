@@ -1,6 +1,10 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use serde::Serialize;
 
+struct AppState {
+    app_name: String,
+}
+
 #[derive(Serialize)]
 struct Man {
     name: String,
@@ -9,8 +13,11 @@ struct Man {
 }
 
 #[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("<h1 style='color: red;'>Hello world! html</h1>")
+async fn hello(data: web::Data<AppState>) -> impl Responder {
+    let app_name = &data.app_name; // <- get app_name
+    HttpResponse::Ok().body(format!(
+        "<h1 style='color: red;'>Hello world! html from {app_name}</h1>"
+    ))
 }
 
 #[post("/echo")]
@@ -36,6 +43,9 @@ async fn jump() -> impl Responder {
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
+            .app_data(web::Data::new(AppState {
+                app_name: String::from("my-first-actix-web"),
+            }))
             .service(hello)
             .service(echo)
             .route("/who", web::get().to(who))
