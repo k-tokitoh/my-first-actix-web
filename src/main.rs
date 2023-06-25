@@ -1,4 +1,12 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct Man {
+    name: String,
+    born_in: isize,
+    langs: Vec<String>,
+}
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -11,9 +19,13 @@ async fn echo(req_body: String) -> impl Responder {
 }
 
 async fn who() -> impl Responder {
-    HttpResponse::Ok()
-        .content_type("application/json")
-        .body(r#"{"name":"takashi","born_in":1979,"lang":["rust","typescript"]}"#)
+    let me = Man {
+        name: String::from("k-tokitoh"),
+        born_in: 1979,
+        langs: vec![String::from("rust"), String::from("typescript")],
+    };
+
+    HttpResponse::Ok().json(me)
 }
 
 async fn jump() -> impl Responder {
