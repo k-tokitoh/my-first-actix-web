@@ -2,7 +2,7 @@ use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 
 #[get("/")]
 async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("<h1>Hello world! html</h1>")
+    HttpResponse::Ok().body("<h1 style='color: red;'>Hello world! html</h1>")
 }
 
 #[post("/echo")]
@@ -10,8 +10,10 @@ async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
 
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("<div style='color: red;'>Hey there!!!!")
+async fn who() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("application/json")
+        .body(r#"{"name":"takashi","born_in":1979,"lang":["rust","typescript"]}"#)
 }
 
 async fn jump() -> impl Responder {
@@ -24,7 +26,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(hello)
             .service(echo)
-            .route("/hey", web::get().to(manual_hello))
+            .route("/who", web::get().to(who))
             .service(
                 web::scope("/hop").service(web::scope("/step").route("/jump", web::get().to(jump))),
             )
