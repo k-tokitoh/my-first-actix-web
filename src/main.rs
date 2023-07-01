@@ -1,8 +1,10 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use serde::Serialize;
+use std::sync::Mutex;
 
 struct AppState {
     app_name: String,
+    access_counter: Mutex<i32>,
 }
 
 #[derive(Serialize)]
@@ -14,9 +16,15 @@ struct Man {
 
 #[get("/")]
 async fn hello(data: web::Data<AppState>) -> impl Responder {
-    let app_name = &data.app_name; // <- get app_name
+    let app_name = &data.app_name;
+    let mut access_counter = data.access_counter.lock().unwrap();
+    *access_counter += 1;
+
     HttpResponse::Ok().body(format!(
-        "<h1 style='color: red;'>Hello world! html from {app_name}</h1>"
+        r#"
+            <h1 style='color: red;'>Hello world! html from {app_name}</h1>
+            <div>access_counter: {access_counter}</div>
+        "#
     ))
 }
 
@@ -41,11 +49,14 @@ async fn jump() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    let state = web::Data::new(AppState {
+        app_name: String::from("my-first-actix-web"),
+        access_counter: Mutex::new(0),
+    });
+
+    HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(AppState {
-                app_name: String::from("my-first-actix-web"),
-            }))
+            .app_data(state.clone())
             .service(hello)
             .service(echo)
             .route("/who", web::get().to(who))
