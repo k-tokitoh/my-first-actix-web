@@ -1,6 +1,8 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use std::sync::Mutex;
 
+mod database;
+mod schema;
 mod tasks;
 mod who;
 
@@ -39,9 +41,12 @@ async fn main() -> std::io::Result<()> {
         access_counter: Mutex::new(0),
     });
 
+    let pool = database::get_pool();
+
     HttpServer::new(move || {
         App::new()
             .app_data(state.clone())
+            .app_data(web::Data::new(pool.clone()))
             .service(hello)
             .service(echo)
             .route("/who", web::get().to(who::handler))
