@@ -1,17 +1,11 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use serde::Serialize;
 use std::sync::Mutex;
+
+mod who;
 
 struct AppState {
     app_name: String,
     access_counter: Mutex<i32>,
-}
-
-#[derive(Serialize)]
-struct Man {
-    name: String,
-    born_in: isize,
-    langs: Vec<String>,
 }
 
 #[get("/")]
@@ -33,16 +27,6 @@ async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
 
-async fn who() -> impl Responder {
-    let me = Man {
-        name: String::from("k-tokitoh"),
-        born_in: 1979,
-        langs: vec![String::from("rust"), String::from("typescript")],
-    };
-
-    HttpResponse::Ok().json(me)
-}
-
 async fn jump() -> impl Responder {
     "jumped."
 }
@@ -59,7 +43,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(state.clone())
             .service(hello)
             .service(echo)
-            .route("/who", web::get().to(who))
+            .route("/who", web::get().to(who::handler))
             .service(
                 web::scope("/hop").service(web::scope("/step").route("/jump", web::get().to(jump))),
             )
