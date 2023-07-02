@@ -1,4 +1,5 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use serde::Serialize;
 use std::sync::Mutex;
 
 mod who;
@@ -31,6 +32,25 @@ async fn jump() -> impl Responder {
     "jumped."
 }
 
+#[derive(Serialize)]
+struct Task {
+    id: u32,
+    description: String,
+}
+
+async fn index() -> impl Responder {
+    let lunch = Task {
+        id: 0,
+        description: String::from("have lunch."),
+    };
+    let bird = Task {
+        id: 1,
+        description: String::from("watch bird."),
+    };
+    let tasks = vec![lunch, bird];
+    HttpResponse::Ok().json(tasks)
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let state = web::Data::new(AppState {
@@ -47,6 +67,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/hop").service(web::scope("/step").route("/jump", web::get().to(jump))),
             )
+            .service(web::scope("tasks").route("/", web::get().to(index)))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
