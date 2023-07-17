@@ -45,23 +45,19 @@ struct UpdateRequestParams {
 
 // view
 async fn index(pool: web::Data<DbPool>) -> actix_web::Result<impl Responder> {
-    let result = web::block(move || {
-        let mut conn = pool.get().expect("couldn't get db connection from pool");
-        get_tasks(&mut conn)
-    })
-    .await?
-    .map_err(error::ErrorInternalServerError)?;
+    let mut conn = pool.get().map_err(error::ErrorInternalServerError)?;
+    let result = web::block(move || get_tasks(&mut conn))
+        .await?
+        .map_err(error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().json(result))
 }
 
 // service
 fn get_tasks(conn: &mut SqliteConnection) -> diesel::QueryResult<Vec<Task>> {
-    let result = tasks
-        .load(conn)
-        // .load::<Task>(conn)  こっちでもOK
-        // あるいはSelectableをderiveしてas_select()とかつかってもいいらしい。よくわかってない
-        .expect("Error loading person that was just inserted");
+    let result = tasks.load(conn)?;
+    // .load::<Task>(conn)  こっちでもOK
+    // あるいはSelectableをderiveしてas_select()とかつかってもいいらしい。よくわかってない
     Ok(result)
 }
 
@@ -72,22 +68,17 @@ async fn read(
 ) -> actix_web::Result<impl Responder> {
     let (task_id,) = task_id.into_inner();
 
-    let result = web::block(move || {
-        let mut conn = pool.get().expect("couldn't get db connection from pool");
-        get_task(&mut conn, task_id)
-    })
-    .await?
-    .map_err(error::ErrorInternalServerError)?;
+    let mut conn = pool.get().map_err(error::ErrorInternalServerError)?;
+    let result = web::block(move || get_task(&mut conn, task_id))
+        .await?
+        .map_err(error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().json(result))
 }
 
 // service
 fn get_task(conn: &mut SqliteConnection, task_id: i32) -> diesel::QueryResult<Task> {
-    let result = tasks
-        .filter(id.eq(task_id))
-        .first::<Task>(conn)
-        .expect("Error loading task");
+    let result = tasks.filter(id.eq(task_id)).first::<Task>(conn)?;
     Ok(result)
 }
 
@@ -99,12 +90,10 @@ async fn create(
     let new_task = NewTask {
         body: form.body.clone(),
     };
-    let result = web::block(move || {
-        let mut conn = pool.get().expect("couldn't get db connection from pool");
-        create_task(&mut conn, &new_task)
-    })
-    .await?
-    .map_err(error::ErrorInternalServerError)?;
+    let mut conn = pool.get().map_err(error::ErrorInternalServerError)?;
+    let result = web::block(move || create_task(&mut conn, &new_task))
+        .await?
+        .map_err(error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().json(result))
 }
@@ -114,8 +103,7 @@ pub fn create_task(conn: &mut SqliteConnection, new_task: &NewTask) -> diesel::Q
     let result = diesel::insert_into(crate::schema::tasks::table)
         .values(new_task)
         .returning(Task::as_returning()) // as_returning() はSelectableによって利用可能になっているらしい
-        .get_result(conn)
-        .expect("Error saving new task");
+        .get_result(conn)?;
     Ok(result)
 }
 
@@ -127,12 +115,10 @@ async fn update(
 ) -> actix_web::Result<impl Responder> {
     let (task_id,) = task_id.into_inner();
 
-    let result = web::block(move || {
-        let mut conn = pool.get().expect("couldn't get db connection from pool");
-        update_task(&mut conn, task_id, &form.body)
-    })
-    .await?
-    .map_err(error::ErrorInternalServerError)?;
+    let mut conn = pool.get().map_err(error::ErrorInternalServerError)?;
+    let result = web::block(move || update_task(&mut conn, task_id, &form.body))
+        .await?
+        .map_err(error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().json(result))
 }
@@ -157,12 +143,10 @@ async fn delete(
 ) -> actix_web::Result<impl Responder> {
     let (task_id,) = task_id.into_inner();
 
-    let result = web::block(move || {
-        let mut conn = pool.get().expect("couldn't get db connection from pool");
-        delete_task(&mut conn, task_id)
-    })
-    .await?
-    .map_err(error::ErrorInternalServerError)?;
+    let mut conn = pool.get().map_err(error::ErrorInternalServerError)?;
+    let result = web::block(move || delete_task(&mut conn, task_id))
+        .await?
+        .map_err(error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().json(result))
 }
