@@ -3,6 +3,7 @@ use hello_world::HelloRequest;
 
 pub mod hello_world {
     tonic::include_proto!("my_first_tonic");
+    // include!("/relative/protobuf/directory/helloworld.rs");
 }
 
 #[tokio::main]
