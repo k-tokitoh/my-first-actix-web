@@ -1,8 +1,8 @@
 ```mermaid
 graph TD;
-    curl-->client/http-server;
-    browser-->client/http-server;
-    client/http-server-->server;
-    client/rust-bin-->server;
-    grpcurl-->server;
+    curl-->HTTP_SERVER["client/http-server@actix-web"];
+    browser-->HTTP_SERVER;
+    HTTP_SERVER-->GRPC_SERVER["server@tonic"];
+    client/rust-bin-->GRPC_SERVER;
+    grpcurl-->GRPC_SERVER;
 ```
