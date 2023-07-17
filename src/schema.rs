@@ -2,7 +2,7 @@
 
 diesel::table! {
     tasks (id) {
-        id -> Integer,
+        id -> Nullable<Integer>,
         body -> Text,
     }
 }

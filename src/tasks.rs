@@ -11,7 +11,7 @@ pub fn scope() -> actix_web::Scope {
             web::resource("/")
                 .name("tasks")
                 .route(web::get().to(index))
-                .route(web::put().to(create)),
+                .route(web::post().to(create)),
         )
         .service(
             web::resource("{id}")
@@ -28,7 +28,7 @@ pub fn scope() -> actix_web::Scope {
 #[diesel(table_name = crate::schema::tasks)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Task {
-    pub id: i32,
+    pub id: Option<i32>,
     pub body: String,
 }
 
@@ -129,7 +129,7 @@ pub fn update_task(
     task_id: i32,
     body: &String,
 ) -> diesel::QueryResult<Task> {
-    let task: Task = diesel::update(crate::schema::tasks::table.find(task_id))
+    let task: Task = diesel::update(crate::schema::tasks::table.filter(id.eq(task_id)))
         .set(crate::schema::tasks::body.eq(body))
         .get_result(conn)?;
 
@@ -153,7 +153,8 @@ async fn delete(
 
 // service
 pub fn delete_task(conn: &mut SqliteConnection, task_id: i32) -> diesel::QueryResult<Task> {
-    let task: Task = diesel::delete(crate::schema::tasks::table.find(task_id)).get_result(conn)?;
+    let task: Task =
+        diesel::delete(crate::schema::tasks::table.filter(id.eq(task_id))).get_result(conn)?;
 
     Ok(task)
 }
